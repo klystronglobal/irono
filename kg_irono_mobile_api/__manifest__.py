@@ -2,11 +2,12 @@
 {
     "name": "KG IRONO Mobile API",
     "summary": """KG Mobile API""",
-    "category": "Website",
-    "version": "17.0.1",
+    "category": "Extra Tools",
+    "version": "17.1.1",
+    "sequence": 1,
     "author": "Klystron Global",
     "maintainer": "Aravind",
-    "license": "Other proprietary",
+    "license": "AGPL-3",
     "website": "https://klystronglobal.com",
     "depends": ['web', 'base', 'product', 'sale'],
     "data": [
