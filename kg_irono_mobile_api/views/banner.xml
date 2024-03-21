@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="kg_irono_banner_form" model="ir.ui.view">
+            <field name="name">irono.banner.form</field>
+            <field name="model">irono.banner</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="main_heading"/>
+                                <field name="sub_heading"/>
+                                <field name="button_text"/>
+                                <field name="product_id"/>
+                            </group>
+                            <group>
+                                <field name="background_image"/>
+                                <field name="background_color" widget="color"/>
+                                <field name="active" widget="boolean_toggle"/>
+                                <field name="offers_for" required="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

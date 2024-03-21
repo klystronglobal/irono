@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_mobile_banner" model="ir.actions.act_window">
+            <field name="name">Banner</field>
+            <field name="res_model">irono.banner</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new banner
+                </p>
+                <p>
+                    Banner to display in mobile apps home page.
+                </p>
+            </field>
+        </record>
+
+        <record id="action_mobile_partner_vendors" model="ir.actions.act_window">
+            <field name="name">Vendors</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('kg_partner_type','=','vendor')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new vendor
+                </p>
+            </field>
+        </record>
+
+        <record id="action_mobile_partner_customers" model="ir.actions.act_window">
+            <field name="name">Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('kg_partner_type','=','customer')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new vendor
+                </p>
+            </field>
+        </record>
+
+        <record id="action_mobile_services" model="ir.actions.act_window">
+            <field name="name">Services</field>
+            <field name="res_model">product.product</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('irono_service','=',True)]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new service
+                </p>
+            </field>
+        </record>
+
+        <record id="action_mobile_orders" model="ir.actions.act_window">
+            <field name="name">Orders</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('irono_service','=',True)]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new order
+                </p>
+            </field>
+        </record>
+
+        <record id="twilio_account_action" model="ir.actions.act_window">
+            <field name="name">Twilio Account</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">twilio.account</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Generate Account Details
+                </p>
+            </field>
+        </record>
+
+
+        <menuitem name="Mobile App" id="kg_mobile_app_root"/>
+        <menuitem name="Banner" parent="kg_mobile_app_root" sequence="1" id="kg_mobile_app_banner"
+                  action="action_mobile_banner"/>
+        <menuitem name="Partners" parent="kg_mobile_app_root" sequence="3" id="kg_mobile_app_partner"/>
+        <menuitem name="Vendors" parent="kg_mobile_app_partner" sequence="1" id="kg_mobile_app_partner_vendors"
+                  action="action_mobile_partner_vendors"/>
+        <menuitem name="Customers" parent="kg_mobile_app_partner" sequence="3" id="kg_mobile_app_partner_customers"
+                  action="action_mobile_partner_customers"/>
+        <menuitem name="Services" parent="kg_mobile_app_root" sequence="5" id="kg_mobile_app_services"
+                  action="action_mobile_services"/>
+        <menuitem name="Orders" parent="kg_mobile_app_root" sequence="7" id="kg_mobile_app_orders"
+                  action="action_mobile_orders"/>
+        <menuitem id="twilio_configuration_menu" name="Configuration"
+                  parent="kg_mobile_app_root" sequence="9"/>
+        <menuitem id="twilio_account_menu" name="Twilio Account"
+                  parent="twilio_configuration_menu" action="twilio_account_action"
+                  sequence="4"/>
+    </data>
+</odoo>
