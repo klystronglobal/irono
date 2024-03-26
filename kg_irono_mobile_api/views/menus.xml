@@ -39,6 +39,17 @@
             </field>
         </record>
 
+        <record id="action_mobile_services_category" model="ir.actions.act_window">
+            <field name="name">Services Category</field>
+            <field name="res_model">product.category</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new service category
+                </p>
+            </field>
+        </record>
+
         <record id="action_mobile_services" model="ir.actions.act_window">
             <field name="name">Services</field>
             <field name="res_model">product.product</field>
@@ -84,7 +95,10 @@
                   action="action_mobile_partner_vendors"/>
         <menuitem name="Customers" parent="kg_mobile_app_partner" sequence="3" id="kg_mobile_app_partner_customers"
                   action="action_mobile_partner_customers"/>
-        <menuitem name="Services" parent="kg_mobile_app_root" sequence="5" id="kg_mobile_app_services"
+        <menuitem name="Services" parent="kg_mobile_app_root" sequence="5" id="kg_mobile_app_services_root"/>
+        <menuitem name="Service Category" parent="kg_mobile_app_services_root" sequence="2" id="kg_mobile_app_services_category"
+                  action="action_mobile_services_category"/>
+        <menuitem name="Services" parent="kg_mobile_app_services_root" sequence="5" id="kg_mobile_app_services"
                   action="action_mobile_services"/>
         <menuitem name="Orders" parent="kg_mobile_app_root" sequence="7" id="kg_mobile_app_orders"
                   action="action_mobile_orders"/>

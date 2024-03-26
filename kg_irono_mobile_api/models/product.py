@@ -7,3 +7,8 @@ class ProductProductInherit(models.Model):
 
     irono_service = fields.Boolean('Irono Service', default=False)
     kg_partner_id = fields.Many2one('res.partner', 'Vendor')
+
+class ProductCategoryInherit(models.Model):
+    _inherit = "product.category"
+
+    image_1920 = fields.Image('Image')

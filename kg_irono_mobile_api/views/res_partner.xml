@@ -12,8 +12,11 @@
                 </xpath>
                 <xpath expr="//notebook/page[@name='contact_addresses']" position="after">
                     <page name="kg_vendor_services" string="Services">
+                        <group>
+                            <field name="description"/>
+                        </group>
                         <group string="Services">
-                                <field name="product_ids" nolabel="0"/>
+                                <field name="product_ids" readonly="1" nolabel="0"/>
                         </group>
                     </page>
                     <page invisible="kg_partner_type != 'customer'" name="kg_fav_services" string="Favourite Services">

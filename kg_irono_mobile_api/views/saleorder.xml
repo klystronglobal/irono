@@ -8,7 +8,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_id']" position="before">
                     <field name="irono_service" invisible="0"/>
-                    <field name="kg_vendor_id" invisible="1"/>
+                    <field name="vendor_otp" invisible="0"/>
+                    <field name="kg_vendor_id" domain="[('kg_partner_type', '=', 'vendor')]" invisible="0"/>
                 </xpath>
             </field>
         </record>
