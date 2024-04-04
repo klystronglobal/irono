@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-
 from odoo import http
-import json
+import json, random, logging
 from odoo.http import request
 from twilio.rest import Client
-import random
-import logging
-import ast
+from twilio.base.exceptions import TwilioException
 from odoo.addons.kg_irono_mobile_api.common import (valid_response, invalid_response, ROUTE_BASE, get_user)
 
 _logger = logging.getLogger(__name__)
-from twilio.base.exceptions import TwilioException
 
 
-class Irono(http.Controller):
+class IronoCustomer(http.Controller):
 
     @http.route('/customer/login', methods=["POST"], type="json", auth="none", csrf=False)
     def customer_login_phone(self, **post):
@@ -29,14 +25,6 @@ class Irono(http.Controller):
             return valid_response({'result': True}, message='User Already Exists. Provide OTP !',
                                   is_http=False)
         else:
-            # _logger.info("New user.")
-            # initial_partner = request.env['irono.initial.otp'].sudo().search([], limit=1)
-            # if initial_partner and initial_partner.initial_user_login:
-            #     values = ast.literal_eval(initial_partner.initial_user_login)
-            #     login_otp = self.generate_login_otp()
-            #     values[phone] = login_otp
-            #     initial_partner.write({'initial_user_login': values})
-            #     self.send_login_otp(login_otp, phone)
             return valid_response({'result': False}, message='User does not exists. Sign Up !',
                                   is_http=False)
 
@@ -151,7 +139,7 @@ class Irono(http.Controller):
             [('state', '=', 'sale'), ('invoice_status', '=', 'invoiced'), ('irono_service', '=', True),
              ('partner_id', '=', customer_id)],
             ['id', 'name', 'kg_vendor_id', 'amount_total'])
-        return valid_response({'result': order_ids}, message='Accepted Orders !',
+        return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
 
     def customer_home_page_values(self, partner_id):
@@ -167,30 +155,26 @@ class Irono(http.Controller):
                 services_providered = request.env['res.partner'].sudo().search_read(
                     [('kg_partner_type', '=', 'vendor')], ['name', 'id'])
                 services_providered = self.get_list_with_image(services_providered, 'res.partner', 'image_1920')
+                banners = self.get_list_with_image(banners, 'irono.banner', 'background_image')
                 service_category = request.env['product.category'].sudo().search_read([], ['name', 'id'])
                 service_category = self.get_list_with_image(service_category, 'product.category', 'image_1920')
                 values['service_providers'] = services_providered
                 values['service_categories'] = service_category
                 values['banners'] = banners
-            # elif partner_id.kg_partner_type == 'vendor':
-            #     banners = request.env['irono.banner'].sudo().search_read(
-            #         [('offers_for', '=', 'customer'), ('active', '=', True)],
-            #         ['name', 'background_color', 'sub_heading', 'main_heading', 'button_text', 'product_id'])
-            #     values['banners'] = banners
-            # else:
-            #     pass
             return values
 
     def check_user_exist(self, phone):
         if phone:
-            partner = request.env['res.partner'].sudo().search([('phone', '=', phone), ('active', '=', True)])
+            partner = request.env['res.partner'].sudo().search(
+                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', True)])
             return partner
         else:
             return False
 
     def check_sleeping_user_exist(self, phone):
         if phone:
-            partner = request.env['res.partner'].sudo().search([('phone', '=', phone), ('active', '=', False)])
+            partner = request.env['res.partner'].sudo().search(
+                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', False)])
             return partner
         else:
             return False
@@ -223,14 +207,6 @@ class Irono(http.Controller):
                 return partner_id
             return False
         else:
-            # initial_partner = request.env['irono.initial.otp'].sudo().search([], limit=1)
-            # if initial_partner and initial_partner.initial_user_login:
-            #     values = ast.literal_eval(initial_partner.initial_user_login)
-            #     if values.get(str(phone)) and values.get(str(phone)) == otp:
-            #         partner = request.env['res.partner'].sudo().create(
-            #             {'phone': phone, 'name': ' ', 'kg_partner_type': 'customer'})
-            #         _logger.info("Partner created. ID = " + str(partner.id))
-            #         return partner
             partner_id = self.check_sleeping_user_exist(phone)
             if partner_id and partner_id.kg_otp:
                 if partner_id.kg_otp == otp:
@@ -238,6 +214,8 @@ class Irono(http.Controller):
                 return False
 
     def get_list_with_image(self, values, model, field):
+        if not values:
+            return []
         for rec in values:
             rec['image'] = self.get_image_url(model, rec.get('id'), field)
         return values

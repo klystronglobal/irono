@@ -1,4 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_irono_banner,irono_banner,model_irono_banner,,1,1,1,1
 access_twilio_account,twilio_account,model_twilio_account,,1,1,1,1
-access_irono_initial_otp,irono_initial_otp,model_irono_initial_otp,,1,1,1,1

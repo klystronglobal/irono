@@ -11,12 +11,24 @@
                     <field name="kg_otp" invisible="0"/>
                 </xpath>
                 <xpath expr="//notebook/page[@name='contact_addresses']" position="after">
-                    <page name="kg_vendor_services" string="Services">
+                    <page invisible="kg_partner_type != 'vendor'" name="kg_vendor_bussiness_details"
+                          string="Bussiness Details">
+                        <group>
+                            <field name="bussiness_name"/>
+                            <field name="bussiness_phone"/>
+                            <field name="bussiness_email"/>
+                            <field name="verified_vendor" invisible="0"/>
+                            <field name="bussiness_doc_ids" widget="many2many_attachment_preview"/>
+                            <button invisible="verified_vendor == 'verified'" class="btn btn-success" name="confirm_vendor_verification" type="object">Confirm Verification</button>
+                            <button invisible="verified_vendor == 'draft'" class="btn btn-danger" name="revoke_vendor_verification" type="object"> Revoke Verification</button>
+                        </group>
+                    </page>
+                    <page invisible="kg_partner_type != 'vendor'" name="kg_vendor_services" string="Services">
                         <group>
                             <field name="description"/>
                         </group>
                         <group string="Services">
-                                <field name="product_ids" readonly="1" nolabel="0"/>
+                            <field name="product_ids" readonly="1" nolabel="0"/>
                         </group>
                     </page>
                     <page invisible="kg_partner_type != 'customer'" name="kg_fav_services" string="Favourite Services">

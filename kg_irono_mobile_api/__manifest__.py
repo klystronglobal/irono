@@ -13,7 +13,6 @@
     "data": [
         'security/ir.model.access.csv',
         'data/banner_sequence.xml',
-        'data/demo.xml',
         'views/banner.xml',
         'views/product.xml',
         'views/res_partner.xml',
