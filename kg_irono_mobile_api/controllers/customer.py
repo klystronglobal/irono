@@ -66,6 +66,15 @@ class IronoCustomer(http.Controller):
             return valid_response({'result': False}, message='User Authentication Failed !',
                                   is_http=False)
 
+    @http.route('/customer/get/home/page/values', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_get_homepage_values(self, **post):
+        data = json.loads(request.httprequest.data)
+        phone = data.get('phone', False)
+        result = self.check_user_exist(phone)
+        values = self.customer_home_page_values(result)
+        return valid_response(values, message='User Authentication Successfull !',
+                              is_http=False)
+
     @http.route('/customer/get/vendor/service/details', methods=["POST"], type="json", auth="none", csrf=False)
     def customer_get_vendor_service_details(self, **post):
         data = json.loads(request.httprequest.data)
