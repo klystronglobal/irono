@@ -21,7 +21,7 @@ class IronoCustomer(http.Controller):
             _logger.info("Already a user")
             login_otp = self.generate_login_otp()
             partner_id.sudo().write({'kg_otp': login_otp})
-            # self.send_login_otp(login_otp, phone)
+            self.send_login_otp(login_otp, phone)
             return valid_response({'result': True}, message='User Already Exists. Provide OTP !',
                                   is_http=False)
         else:
@@ -46,7 +46,7 @@ class IronoCustomer(http.Controller):
         _logger.info("Created a partner...")
         login_otp = self.generate_login_otp()
         partner_id.sudo().write({'kg_otp': login_otp})
-        # self.send_login_otp(login_otp, phone)
+        self.send_login_otp(login_otp, phone)
         return valid_response({'result': True}, message='Customer details saved. Waiting for otp.',
                               is_http=False)
 
@@ -71,6 +71,9 @@ class IronoCustomer(http.Controller):
         data = json.loads(request.httprequest.data)
         phone = data.get('phone', False)
         result = self.check_user_exist(phone)
+        if not result:
+            return valid_response({'result': False}, message='User Does not Exist !',
+                                  is_http=False)
         values = self.customer_home_page_values(result)
         return valid_response(values, message='User Authentication Successfull !',
                               is_http=False)
@@ -183,7 +186,7 @@ class IronoCustomer(http.Controller):
     def check_sleeping_user_exist(self, phone):
         if phone:
             partner = request.env['res.partner'].sudo().search(
-                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', False)])
+                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', False)], limit=1)
             return partner
         else:
             return False
@@ -232,6 +235,6 @@ class IronoCustomer(http.Controller):
     def get_image_url(self, resModel, resId, resField):
         IrConfig = request.env['ir.config_parameter'].sudo()
         base_url = IrConfig.get_param('report.url') or IrConfig.get_param('web.base.url')
-        url = str(base_url) + str('/web/image?model=' + str(resModel if resModel else "") + '&id=' + str(
-            resId if resId else "") + '&field=' + str(resField if resField else ""))
+        url = str(base_url) + str('/get/irono/image/' + str(resModel if resModel else "") + '/' + str(
+            resId if resId else "") + '/' + str(resField if resField else ""))
         return url

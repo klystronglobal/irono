@@ -12,6 +12,27 @@ _logger = logging.getLogger(__name__)
 
 class IronoVendor(http.Controller):
 
+    @http.route('/get/irono/image/<string:model>/<int:id>/<string:field>', type='http', auth="public")
+    def get_images_view(self, xmlid=None, model='ir.attachment', id=None, field='raw',
+                    filename_field='name', filename=None, mimetype=None, unique=False,
+                    download=False, width=0, height=0, crop=False, access_token=None,
+                    nocache=False):
+        record = request.env[model].sudo().browse(int(id))
+        stream = request.env['ir.binary']._get_image_stream_from(
+            record, field, filename=filename, filename_field=filename_field,
+            mimetype=mimetype, width=int(width), height=int(height), crop=crop,
+        )
+        send_file_kwargs = {'as_attachment': download}
+        if unique:
+            send_file_kwargs['immutable'] = True
+            send_file_kwargs['max_age'] = http.STATIC_CACHE_LONG
+        if nocache:
+            send_file_kwargs['max_age'] = None
+
+        res = stream.get_response(**send_file_kwargs)
+        res.headers['Content-Security-Policy'] = "default-src 'none'"
+        return res
+
     @http.route('/vendor/login', methods=["POST"], type="json", auth="none", csrf=False)
     def vendor_login_phone(self, **post):
         data = json.loads(request.httprequest.data)
@@ -21,7 +42,7 @@ class IronoVendor(http.Controller):
             _logger.info("Already a user")
             login_otp = self.generate_login_otp()
             partner_id.sudo().write({'kg_otp': login_otp})
-            # self.send_login_otp(login_otp, phone)
+            self.send_login_otp(login_otp, phone)
             return valid_response({'result': True}, message='User Already Exists. Provide OTP !',
                                   is_http=False)
         else:
@@ -46,7 +67,7 @@ class IronoVendor(http.Controller):
         _logger.info("Created a partner...")
         login_otp = self.generate_login_otp()
         partner_id.sudo().write({'kg_otp': login_otp})
-        # self.send_login_otp(login_otp, phone)
+        self.send_login_otp(login_otp, phone)
         return valid_response({'result': True}, message='Vendor details saved. Waiting for otp.',
                               is_http=False)
 
@@ -61,7 +82,7 @@ class IronoVendor(http.Controller):
                 result.write({'active': True})
             if result.verified_vendor == 'draft':
                 return valid_response({'result': 'draft', 'user': result.id},
-                                      message='Please Submit Related Bussiness Documents !', is_http=False)
+                                      message='Please Submit Bussiness Related Documents !', is_http=False)
             if result.verified_vendor == 'pending':
                 return valid_response({'result': 'pending', 'user': result.id},
                                       message='Verification Pending !', is_http=False)
@@ -78,17 +99,21 @@ class IronoVendor(http.Controller):
         values = self.vendor_home_page_values(result)
         return valid_response(values, message='User Authentication Successfull !',
                               is_http=False)
+
     @http.route('/vendor/submit/bussiness/details', methods=["POST"], type="json", auth="none", csrf=False)
     def vendor_submit_bussiness_details(self, **post):
         data = json.loads(request.httprequest.data)
         bussiness_name = data.get('name', False)
         bussiness_phone = data.get('phone', False)
         bussiness_email = data.get('email', False)
+        bussiness_image = data.get('image', False)
+        bussiness_document = data.get('document', False)
         user = data.get('user', False)
         partner_id = self.get_partner(user)
         if partner_id:
             partner_id.write({'bussiness_name': bussiness_name, 'bussiness_phone': bussiness_phone,
-                              'bussiness_email': bussiness_email, 'verified_vendor': 'pending'})
+                              'bussiness_email': bussiness_email, 'verified_vendor': 'pending',
+                              'bussiness_image': bussiness_image, 'bussiness_document': bussiness_document})
             return valid_response({'result': True}, message='Bussiness Details Submitted Successfull !', is_http=False)
 
     @http.route('/vendor/get/service/category', methods=["POST"], type="json", auth="none", csrf=False)
@@ -114,7 +139,7 @@ class IronoVendor(http.Controller):
         description_sale = data.get('description', False)
         user = data.get('user', False)
         values = {'name': name, 'standard_price': cost, 'lst_price': sales_price, 'categ_id': category,
-                  'kg_partner_id': user}
+                  'kg_partner_id': user, 'irono_service': True}
         values['default_code'] = internal_reference if internal_reference else ''
         values['description_sale'] = description_sale if description_sale else ''
         product_id = request.env['product.product'].sudo().create(values)
@@ -155,7 +180,6 @@ class IronoVendor(http.Controller):
         order_ids = self.get_list_with_orderlines(order_ids)
         return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
-
 
     ''' Functions '''
 
@@ -237,8 +261,8 @@ class IronoVendor(http.Controller):
     def get_image_url(self, resModel, resId, resField):
         IrConfig = request.env['ir.config_parameter'].sudo()
         base_url = IrConfig.get_param('report.url') or IrConfig.get_param('web.base.url')
-        url = str(base_url) + str('/web/image?model=' + str(resModel if resModel else "") + '&id=' + str(
-            resId if resId else "") + '&field=' + str(resField if resField else ""))
+        url = str(base_url) + str('/get/irono/image/' + str(resModel if resModel else "") + '/' + str(
+            resId if resId else "") + '/' + str(resField if resField else ""))
         return url
 
     def get_partner(self, id):

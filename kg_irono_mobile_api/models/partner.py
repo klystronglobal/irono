@@ -15,7 +15,8 @@ class ResPartnerInherit(models.Model):
     bussiness_name = fields.Char('Bussiness Name', tracking=True)
     bussiness_phone = fields.Char('Bussiness Phone', tracking=True)
     bussiness_email = fields.Char('Bussiness Email', tracking=True)
-    bussiness_doc_ids = fields.Many2many('ir.attachment', string="Shop Images and Gov Docs")
+    bussiness_image = fields.Binary('Shop Image')
+    bussiness_document = fields.Binary('Gov Documents')
     verified_vendor = fields.Selection([('draft', 'Draft'), ('pending', 'Pending'), ('verified', 'Verified')],
                                        'Verification Status', tracking=True,default="draft")
 
