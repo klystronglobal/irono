@@ -14,9 +14,9 @@ class IronoVendor(http.Controller):
 
     @http.route('/get/irono/image/<string:model>/<int:id>/<string:field>', type='http', auth="public")
     def get_images_view(self, xmlid=None, model='ir.attachment', id=None, field='raw',
-                    filename_field='name', filename=None, mimetype=None, unique=False,
-                    download=False, width=0, height=0, crop=False, access_token=None,
-                    nocache=False):
+                        filename_field='name', filename=None, mimetype=None, unique=False,
+                        download=False, width=0, height=0, crop=False, access_token=None,
+                        nocache=False):
         record = request.env[model].sudo().browse(int(id))
         stream = request.env['ir.binary']._get_image_stream_from(
             record, field, filename=filename, filename_field=filename_field,
@@ -139,12 +139,50 @@ class IronoVendor(http.Controller):
         description_sale = data.get('description', False)
         user = data.get('user', False)
         values = {'name': name, 'standard_price': cost, 'lst_price': sales_price, 'categ_id': category,
-                  'kg_partner_id': user, 'irono_service': True}
+                  'kg_partner_id': user, 'irono_service': True, 'detailed_type': 'service'}
         values['default_code'] = internal_reference if internal_reference else ''
         values['description_sale'] = description_sale if description_sale else ''
         product_id = request.env['product.product'].sudo().create(values)
         if product_id:
             return valid_response({'result': True}, message='Service Created Successfully !', is_http=False)
+
+    @http.route('/vendor/get/service/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_get_service_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        product_id = data.get('product_id', False)
+        user = data.get('user', False)
+        if product_id:
+            product = request.env['product.product'].sudo().search(
+                [('id', '=', product_id), ('kg_partner_id', '=', user)])
+        if product:
+            values = {'name': product.name, 'standard_price': product.standard_price, 'lst_price': product.lst_price,
+                      'categ_id': product.categ_id.name,
+                      'reference_no': product.default_code}
+            return valid_response(values, message='Service Details Fetched Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Service Details Fetching Failed !', is_http=False)
+
+    @http.route('/vendor/update/service/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_update_service_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        product_id = data.get('product_id', False)
+        name = data.get('name', False)
+        standard_price = data.get('standard_price', False)
+        lst_price = data.get('lst_price', False)
+        categ_id = data.get('categ_id', False)
+        reference_no = data.get('reference_no', False)
+        user = data.get('user', False)
+        if product_id:
+            product = request.env['product.product'].sudo().search(
+                [('id', '=', product_id), ('kg_partner_id', '=', user)])
+        if product:
+            company = request.env['res.company'].sudo().search([], limit=1)
+            values = {'name': name, 'standard_price': standard_price, 'lst_price': lst_price,
+                      'categ_id': categ_id, 'default_code': reference_no, 'company_id': company.id}
+            # Issue #####################################################
+            product_new = product.sudo().write(values)
+            if product_new:
+                return valid_response(values, message='Service Details Updated Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Service Details Updating Failed !', is_http=False)
 
     @http.route('/vendor/get/pending/services', methods=["POST"], type="json", auth="none", csrf=False)
     def vendor_get_pending_services(self, **post):
