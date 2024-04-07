@@ -8,7 +8,7 @@ class SaleOrderInherit(models.Model):
 
     irono_service = fields.Boolean('Irono Service', default=False)
     kg_vendor_id = fields.Many2one('res.partner', 'Vendor')
-    vendor_otp = fields.Char('Vendor OTP', help="OTP for vendor to completed the order.")
+    vendor_otp = fields.Integer('Vendor OTP', help="OTP for vendor to completed the order.")
 
     def action_confirm(self):
         res = super(SaleOrderInherit, self).action_confirm()

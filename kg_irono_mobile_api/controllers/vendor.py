@@ -219,6 +219,89 @@ class IronoVendor(http.Controller):
         return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
 
+    @http.route('/vendor/get/order/form', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_get_order_form(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        order_id = data.get('order_id', False)
+        order_ids = request.env['sale.order'].sudo().search_read(
+            [('id', '=', int(order_id))], ['id', 'name', 'partner_id', 'order_line', 'amount_total'])
+        order_ids = self.get_list_with_orderlines(order_ids)
+        return valid_response({'result': order_ids}, message='Order Details !',
+                              is_http=False)
+
+    @http.route('/vendor/submit/accept/order', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_submit_accept_order(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        order_id = data.get('order_id', False)
+        order = request.env['sale.order'].sudo().browse(int(order_id))
+        if order:
+            order.sudo().with_user(request.env['res.users'].sudo().browse(2)).action_confirm()
+            return valid_response({'result': True}, message='Order Accepted !',
+                                  is_http=False)
+        return valid_response({'result': False}, message='Order Not Accepted !',
+                              is_http=False)
+
+    @http.route('/vendor/submit/complete/order', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_submit_complete_order(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        order_id = data.get('order_id', False)
+        otp = data.get('otp', False)
+        order = request.env['sale.order'].sudo().browse(int(order_id))
+        if order:
+            if order.vendor_otp != otp:
+                return valid_response({'result': False}, message='Incorrect OTP. Order Not Completed !',
+                                      is_http=False)
+            for rec in order.order_line:
+                rec.sudo().write({'qty_delivered': rec.product_uom_qty})
+            moves = order.sudo().with_user(request.env['res.users'].sudo().browse(2))._create_invoices()
+            moves.sudo().with_user(request.env['res.users'].sudo().browse(2)).action_post()
+            request.env['account.payment.register'].with_context(active_model='account.move',
+                                                                 active_ids=moves.ids).with_user(
+                request.env['res.users'].sudo().browse(2)).create({
+                'payment_date': moves.date,
+            }).with_user(request.env['res.users'].sudo().browse(2))._create_payments()
+            return valid_response({'result': True}, message='Order Accepted !',
+                                  is_http=False)
+        return valid_response({'result': False}, message='Order Not Accepted !',
+                              is_http=False)
+
+    @http.route('/vendor/update/profile/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_update_profile_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        name = data.get('name', False)
+        phone = data.get('phone', False)
+        email = data.get('email', False)
+        description = data.get('description', False)
+        bussiness_name = data.get('bussiness_name', False)
+        bussiness_phone = data.get('bussiness_phone', False)
+        bussiness_email = data.get('bussiness_email', False)
+        if user:
+            partner = request.env['res.partner'].sudo().browse(int(user))
+        if partner:
+            values = {'name': name, 'phone': phone, 'email': email, 'description': description,
+                      'bussiness_name': bussiness_name, 'bussiness_phone': bussiness_phone,
+                      'bussiness_email': bussiness_email}
+            partner.sudo().write(values)
+            return valid_response(values, message='Vendor Profile Details Updated Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Vendor Profile Details Updating Failed !', is_http=False)
+
+    @http.route('/vendor/get/profile/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_get_profile_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        if user:
+            partner = request.env['res.partner'].sudo().browse(int(user))
+        if partner:
+            values = {'name': partner.name, 'email': partner.email, 'phone': partner.phone,
+                      'bussiness_name': partner.bussiness_name, 'bussiness_phone': partner.bussiness_phone,
+                      'bussiness_email': partner.bussiness_email, 'about': partner.description}
+            return valid_response(values, message='Vendor Profile Details Fetched Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Vendor Profile Details Fetching Failed !', is_http=False)
+
     ''' Functions '''
 
     def check_user_exist(self, phone):

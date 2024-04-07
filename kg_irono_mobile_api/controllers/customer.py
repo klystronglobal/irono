@@ -115,6 +115,7 @@ class IronoCustomer(http.Controller):
                 {'partner_id': customer_id, 'irono_service': True, 'order_line': order_lines, 'note': notes,
                  'commitment_date': datetime_object,
                  'company_id': company_id.id, 'kg_vendor_id': vendor_id})
+            print(order_id,'order_idorder_id')
             _logger.info("Created a order...")
             return valid_response({'result': True}, message='Order Booked Successfully !',
                                   is_http=False)
@@ -153,6 +154,32 @@ class IronoCustomer(http.Controller):
             ['id', 'name', 'kg_vendor_id', 'amount_total'])
         return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
+
+    @http.route('/customer/get/profile/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_get_profile_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        if user:
+            partner = request.env['res.partner'].sudo().browse(int(user))
+        if partner:
+            values = {'name': partner.name, 'email': partner.email, 'phone': partner.phone}
+            return valid_response(values, message='Vendor Profile Details Fetched Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Vendor Profile Details Fetching Failed !', is_http=False)
+
+    @http.route('/customer/update/profile/details', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_update_profile_details(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        name = data.get('name', False)
+        phone = data.get('phone', False)
+        email = data.get('email', False)
+        if user:
+            partner = request.env['res.partner'].sudo().browse(int(user))
+        if partner:
+            values = {'name': name, 'phone': phone, 'email': email}
+            partner.sudo().write(values)
+            return valid_response(values, message='Vendor Profile Details Updated Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Vendor Profile Details Updating Failed !', is_http=False)
 
     def customer_home_page_values(self, partner_id):
         if partner_id:
