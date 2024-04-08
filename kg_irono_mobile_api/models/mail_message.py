@@ -6,3 +6,4 @@ class MailMessageInherit(models.Model):
     _inherit = "mail.message"
 
     irono_service = fields.Boolean('Irono Service', default=False)
+    irono_type = fields.Selection([('vendor','Vendor'),('customer','Customer')],'Irono Service')

@@ -2,6 +2,7 @@
 from datetime import datetime
 from odoo import http
 import json, random, logging
+from bs4 import BeautifulSoup
 from odoo.http import request
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioException
@@ -109,6 +110,7 @@ class IronoCustomer(http.Controller):
             # datetime_str = '09/19/22 13:55:26'
             datetime_object = datetime.strptime(delivery_date, '%m/%d/%y %H:%M:%S')
             company_id = request.env['res.company'].sudo().search([], limit=1)
+            partner = request.env['res.partner'].sudo().browse(int(customer_id))
             order_lines = []
             for rec in services_ids:
                 order_lines.append((0, 0, {'product_id': rec['id'], 'product_uom_qty': rec['qty']}))
@@ -116,6 +118,13 @@ class IronoCustomer(http.Controller):
                 {'partner_id': customer_id, 'irono_service': True, 'order_line': order_lines, 'note': notes,
                  'commitment_date': datetime_object,
                  'company_id': company_id.id, 'kg_vendor_id': vendor_id})
+            sub_type = request.env['mail.message.subtype'].sudo().search([('name', '=', 'Note')], limit=1)
+            message = request.env['mail.message'].sudo().create(
+                {'body': 'New service requested by ' + partner.name, 'irono_type': 'customer', 'model': 'sale.order',
+                 'res_id': order_id.id, 'record_name': order_id.name, 'subject': 'Customer: Requested Order',
+                 'author_id': partner.id, 'partner_ids': [vendor_id], 'message_type': 'notification',
+                 'subtype_id': sub_type.id,
+                 'irono_service': True})
             _logger.info("Created a order...")
             return valid_response({'result': True}, message='Order Booked Successfully !',
                                   is_http=False)
@@ -178,8 +187,27 @@ class IronoCustomer(http.Controller):
         if partner:
             values = {'name': name, 'phone': phone, 'email': email}
             partner.sudo().write(values)
-            return valid_response(values, message='Vendor Profile Details Updated Successfully !', is_http=False)
-        return valid_response({'result': False}, message='Vendor Profile Details Updating Failed !', is_http=False)
+            return valid_response(values, message='Customer Profile Details Updated Successfully !', is_http=False)
+        return valid_response({'result': False}, message='Customer Profile Details Updating Failed !', is_http=False)
+
+    @http.route('/customer/get/notification', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_get_notification(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        messages = request.env['mail.message'].sudo().search_read(
+            [('partner_ids', 'in', [user]), ('irono_service', '=', True), ('irono_type', '=', 'customer')],
+            ['id', 'body'],
+            order='id desc')
+        messages = self.clean_mail_body(messages)
+        return valid_response({'result': messages}, message='Customer Notification Fetched Successfully !',
+                              is_http=False)
+
+    '''  Functions  '''
+
+    def clean_mail_body(self, data):
+        for rec in data:
+            rec['body'] = BeautifulSoup(rec['body'], "lxml").text
+        return data
 
     def customer_home_page_values(self, partner_id):
         if partner_id:
@@ -250,7 +278,7 @@ class IronoCustomer(http.Controller):
             return False
         else:
             partner_id = self.check_sleeping_user_exist(phone)
-            _logger.info("22222222 partner_id" + str(partner_id.id))
+            _logger.info("22222222 partner_id " + str(partner_id.id))
             if partner_id and partner_id.kg_otp:
                 if partner_id.kg_otp == otp:
                     _logger.info("Sleepinggggggggggggg okayyyyyyyyyyyyyyyyy" + str(partner_id.id))

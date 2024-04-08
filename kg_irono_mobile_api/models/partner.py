@@ -23,7 +23,18 @@ class ResPartnerInherit(models.Model):
     def confirm_vendor_verification(self):
         for rec in self:
             rec.write({'verified_vendor': 'verified'})
+            sub_type = self.env['mail.message.subtype'].sudo().search([('name', '=', 'Note')], limit=1)
+            message = self.env['mail.message'].create(
+                {'body': 'Bussiness Verification Approved ', 'irono_type': 'vendor', 'model': 'res.partner',
+                 'res_id': self.id, 'record_name': self.name, 'subject': 'Vendor: Bussiness Verification',
+                 'author_id': self.env.user.partner_id.id, 'type': 'notification', 'subtype_id': sub_type.id, 'irono_service': True})
 
     def revoke_vendor_verification(self):
         for rec in self:
             rec.write({'verified_vendor': 'draft'})
+            sub_type = self.env['mail.message.subtype'].sudo().search([('name', '=', 'Note')], limit=1)
+            message = self.env['mail.message'].create(
+                {'body': 'Bussiness Verification Rejected ', 'irono_type': 'vendor', 'model': 'res.partner',
+                 'res_id': self.id, 'record_name': self.name, 'subject': 'Vendor: Bussiness Verification',
+                 'author_id': self.env.user.partner_id.id, 'type': 'notification', 'subtype_id': sub_type.id,
+                 'irono_service': True})

@@ -4,6 +4,7 @@ from odoo import http
 import json, random, logging
 from odoo.http import request
 from twilio.rest import Client
+from bs4 import BeautifulSoup
 from twilio.base.exceptions import TwilioException
 from odoo.addons.kg_irono_mobile_api.common import (valid_response, invalid_response, ROUTE_BASE, get_user)
 
@@ -236,8 +237,15 @@ class IronoVendor(http.Controller):
         user = data.get('user', False)
         order_id = data.get('order_id', False)
         order = request.env['sale.order'].sudo().browse(int(order_id))
-        if order:
+        partner = request.env['res.partner'].sudo().browse(int(user))
+        if order and partner:
             order.sudo().with_user(request.env['res.users'].sudo().browse(2)).action_confirm()
+            sub_type = request.env['mail.message.subtype'].sudo().search([('name', '=', 'Note')], limit=1)
+            message = request.env['mail.message'].sudo().create(
+                {'body': 'Order accepted by ' + partner.name, 'irono_type': 'customer', 'model': 'sale.order',
+                 'res_id': order.id, 'record_name': order.name, 'subject': 'Vendor: Accepted Order',
+                 'author_id': partner.id, 'partner_ids': [order.partner_id.id], 'message_type': 'notification',
+                 'subtype_id': sub_type.id, 'irono_service': True})
             return valid_response({'result': True}, message='Order Accepted !',
                                   is_http=False)
         return valid_response({'result': False}, message='Order Not Accepted !',
@@ -250,6 +258,7 @@ class IronoVendor(http.Controller):
         order_id = data.get('order_id', False)
         otp = data.get('otp', False)
         order = request.env['sale.order'].sudo().browse(int(order_id))
+        partner = request.env['res.partner'].sudo().browse(int(user))
         if order:
             if order.vendor_otp != otp:
                 return valid_response({'result': False}, message='Incorrect OTP. Order Not Completed !',
@@ -263,6 +272,12 @@ class IronoVendor(http.Controller):
                 request.env['res.users'].sudo().browse(2)).create({
                 'payment_date': moves.date,
             }).with_user(request.env['res.users'].sudo().browse(2))._create_payments()
+            sub_type = request.env['mail.message.subtype'].sudo().search([('name', '=', 'Note')], limit=1)
+            message = request.env['mail.message'].sudo().create(
+                {'body': 'Order completed by ' + partner.name, 'irono_type': 'customer', 'model': 'sale.order',
+                 'res_id': order.id, 'record_name': order.name, 'subject': 'Vendor: Completed Order',
+                 'author_id': partner.id, 'partner_ids': [order.partner_id.id], 'message_type': 'notification',
+                 'subtype_id': sub_type.id, 'irono_service': True})
             return valid_response({'result': True}, message='Order Accepted !',
                                   is_http=False)
         return valid_response({'result': False}, message='Order Not Accepted !',
@@ -302,7 +317,24 @@ class IronoVendor(http.Controller):
             return valid_response(values, message='Vendor Profile Details Fetched Successfully !', is_http=False)
         return valid_response({'result': False}, message='Vendor Profile Details Fetching Failed !', is_http=False)
 
+    @http.route('/vendor/get/notification', methods=["POST"], type="json", auth="none", csrf=False)
+    def vendor_get_notification(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        messages = request.env['mail.message'].sudo().search_read(
+            [('partner_ids', 'in', [user]), ('irono_service', '=', True), ('irono_type', '=', 'customer')],
+            ['id', 'body'],
+            order='id desc')
+        messages = self.clean_mail_body(messages)
+        return valid_response({'result': messages}, message='Vendor Notification Fetched Successfully !',
+                              is_http=False)
+
     ''' Functions '''
+
+    def clean_mail_body(self, data):
+        for rec in data:
+            rec['body'] = BeautifulSoup(rec['body'], "lxml").text
+        return data
 
     def check_user_exist(self, phone):
         if phone:
