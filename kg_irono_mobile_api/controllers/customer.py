@@ -202,6 +202,27 @@ class IronoCustomer(http.Controller):
         return valid_response({'result': messages}, message='Customer Notification Fetched Successfully !',
                               is_http=False)
 
+    @http.route('/customer/submit/feedback', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_submit_feedback(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        message = data.get('message', False)
+        try:
+            partner = request.env['res.partner'].sudo().browse(int(user))
+            admin = request.env['res.partner'].sudo().browse(int(3))
+            sub_type = request.env['mail.message.subtype'].sudo().search([('name', '=', 'Discussions')], limit=1)
+            message = request.env['mail.message'].sudo().create(
+                {'body': message, 'model': 'res.partner',
+                 'res_id': partner.id, 'record_name': partner.name, 'subject': partner.name,
+                 'author_id': partner.id, 'partner_ids': [admin.id], 'message_type': 'comment',
+                 'subtype_id': sub_type.id})
+            return valid_response({'result': True}, message='Customer Feedback Submitted Successfully !',
+                                  is_http=False)
+        except:
+            return valid_response({'result': False}, message='Customer Feedback Submitting Failed !',
+                                  is_http=False)
+
+
     '''  Functions  '''
 
     def clean_mail_body(self, data):
