@@ -307,7 +307,7 @@ class IronoVendor(http.Controller):
     def check_user_exist(self, phone):
         if phone:
             partner = request.env['res.partner'].sudo().search(
-                [('phone', '=', phone), ('kg_partner_type', '=', 'vendor'), ('active', '=', True)])
+                [('phone', '=', phone), ('kg_partner_type', '=', 'vendor'), ('active', '=', True)], limit=1)
             return partner
         else:
             return False
@@ -315,7 +315,7 @@ class IronoVendor(http.Controller):
     def check_sleeping_user_exist(self, phone):
         if phone:
             partner = request.env['res.partner'].sudo().search(
-                [('phone', '=', phone), ('kg_partner_type', '=', 'vendor'), ('active', '=', False)])
+                [('phone', '=', phone), ('kg_partner_type', '=', 'vendor'), ('active', '=', False)], limit=1)
             return partner
         else:
             return False
