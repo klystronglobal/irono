@@ -17,6 +17,7 @@
         'views/product.xml',
         'views/res_partner.xml',
         'views/saleorder.xml',
+        'views/res_config.xml',
         'views/twilio_account.xml',
         'views/menus.xml',
     ],

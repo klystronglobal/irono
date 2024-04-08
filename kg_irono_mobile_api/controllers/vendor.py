@@ -329,6 +329,44 @@ class IronoVendor(http.Controller):
         return valid_response({'result': messages}, message='Vendor Notification Fetched Successfully !',
                               is_http=False)
 
+    @http.route('/get/terms/and/condition', methods=["POST"], type="json", auth="none", csrf=False)
+    def get_terms_and_conditions(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        terms_and_conditions = request.env['ir.config_parameter'].sudo().get_param(
+            'kg_irono_mobile_api.terms_and_conditions_irono')
+        return valid_response({'result': terms_and_conditions}, message='Terms and Conditions Fetched Successfully !',
+                              is_http=False)
+
+    @http.route('/get/privacy/and/policy', methods=["POST"], type="json", auth="none", csrf=False)
+    def get_privacy_and_policy(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        privacy_and_policy = request.env['ir.config_parameter'].sudo().get_param(
+            'kg_irono_mobile_api.privacy_and_policy_irono')
+        return valid_response({'result': privacy_and_policy}, message='Privacy and Policy Fetched Successfully !',
+                              is_http=False)
+
+    @http.route('/get/contact/us', methods=["POST"], type="json", auth="none", csrf=False)
+    def get_contact_us(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        company = request.env['res.company'].sudo().search([], limit=1)
+        name = company.name
+        phone = company.phone
+        street = company.street
+        street2 = company.street2
+        city = company.city
+        zip = company.zip
+        email = company.zip
+        website = company.website
+        state = company.state_id.name if company.state_id else ''
+        country = company.country_id.name if company.country_id else ''
+        values = {'name': name, 'phone': phone, 'street': street, 'street2': street2, 'city': city, 'zip': zip,
+                  'email': email, 'website':website,'state':state,'country':country}
+        return valid_response({'result': values}, message='Company Details Fetched Successfully !',
+                              is_http=False)
+
     ''' Functions '''
 
     def clean_mail_body(self, data):
