@@ -205,7 +205,7 @@ class IronoCustomer(http.Controller):
     def check_user_exist(self, phone):
         if phone:
             partner = request.env['res.partner'].sudo().search(
-                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', True)])
+                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', True)],limit=1)
             return partner
         else:
             return False
