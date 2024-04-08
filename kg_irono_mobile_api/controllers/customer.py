@@ -56,6 +56,7 @@ class IronoCustomer(http.Controller):
         phone = data.get('phone', False)
         otp = data.get('otp', False)
         result = self.check_user_otp(phone, int(otp))
+        _logger.info("Submitted valuessss otpppp " + str(result))
         if result:
             if not result.active:
                 result.write({'active': True})
@@ -204,7 +205,7 @@ class IronoCustomer(http.Controller):
     def check_user_exist(self, phone):
         if phone:
             partner = request.env['res.partner'].sudo().search(
-                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', True)],limit=1)
+                [('phone', '=', phone), ('kg_partner_type', '=', 'customer'), ('active', '=', True)], limit=1)
             return partner
         else:
             return False
@@ -239,15 +240,20 @@ class IronoCustomer(http.Controller):
         return random.randint(1000, 9999)
 
     def check_user_otp(self, phone, otp):
+        _logger.info("check_user_otp" + str(phone) + " , " + str(otp))
         partner_id = self.check_user_exist(phone)
+        _logger.info("11111 partner_id" + str(partner_id.id))
         if partner_id and partner_id.kg_otp:
             if partner_id.kg_otp == otp:
+                _logger.info("Activeeeeeeee Okayyyyyyyyyyyyyyyy")
                 return partner_id
             return False
         else:
             partner_id = self.check_sleeping_user_exist(phone)
+            _logger.info("22222222 partner_id" + str(partner_id.id))
             if partner_id and partner_id.kg_otp:
                 if partner_id.kg_otp == otp:
+                    _logger.info("Sleepinggggggggggggg okayyyyyyyyyyyyyyyyy" + str(partner_id.id))
                     return partner_id
                 return False
 
