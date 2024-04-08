@@ -115,7 +115,6 @@ class IronoCustomer(http.Controller):
                 {'partner_id': customer_id, 'irono_service': True, 'order_line': order_lines, 'note': notes,
                  'commitment_date': datetime_object,
                  'company_id': company_id.id, 'kg_vendor_id': vendor_id})
-            print(order_id,'order_idorder_id')
             _logger.info("Created a order...")
             return valid_response({'result': True}, message='Order Booked Successfully !',
                                   is_http=False)
