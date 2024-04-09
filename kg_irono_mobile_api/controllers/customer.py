@@ -201,6 +201,30 @@ class IronoCustomer(http.Controller):
         return valid_response({'result': messages}, message='Customer Notification Fetched Successfully !',
                               is_http=False)
 
+    @http.route('/customer/submit/global/search', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_submit_global_search(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        search = data.get('search', False)
+        values = []
+        try:
+            partner_ids = request.env['res.partner'].sudo().search(
+                ['|', '|', ('name', 'ilike', str(search)), ('phone', 'ilike', str(search)),
+                 ('bussiness_name', 'ilike', str(search)), ('kg_partner_type', '=', 'vendor')])
+            product_ids = request.env['product.product'].sudo().search(
+                ['|', ('name', 'ilike', str(search)), ('default_code', 'ilike', str(search)), ('irono_service', '=', True)])
+            for rec in partner_ids:
+                values.append({'name': rec.name, 'id': rec.id})
+            for rec in product_ids:
+                values.append({'name': rec.kg_partner_id.name, 'id': rec.kg_partner_id.id})
+            values = self.remove_duplicates(values)
+            values = self.get_list_with_image(values, 'res.partner', 'image_1920')
+            return valid_response({'result': values}, message='Search Result Fetched Successfully !',
+                                  is_http=False)
+        except:
+            return valid_response({'result': False}, message='Search Result Fetching Failed !',
+                                  is_http=False)
+
     @http.route('/customer/submit/feedback', methods=["POST"], type="json", auth="none", csrf=False)
     def customer_submit_feedback(self, **post):
         data = json.loads(request.httprequest.data)
@@ -227,6 +251,15 @@ class IronoCustomer(http.Controller):
         for rec in data:
             rec['body'] = BeautifulSoup(rec['body'], "lxml").text
         return data
+
+    def remove_duplicates(self, data):
+        seen_ids = set()
+        result = []
+        for item in data:
+            if item['id'] not in seen_ids:
+                result.append(item)
+                seen_ids.add(item['id'])
+        return result
 
     def customer_home_page_values(self, partner_id):
         if partner_id:
