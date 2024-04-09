@@ -201,6 +201,24 @@ class IronoCustomer(http.Controller):
         return valid_response({'result': messages}, message='Customer Notification Fetched Successfully !',
                               is_http=False)
 
+    @http.route('/customer/get/category/wise/services', methods=["POST"], type="json", auth="none", csrf=False)
+    def customer_get_category_wise_service(self, **post):
+        data = json.loads(request.httprequest.data)
+        user = data.get('user', False)
+        category_id = data.get('category_id', False)
+        values = []
+        try:
+            product_ids = request.env['product.product'].sudo().search(
+                [('categ_id', '=', int(category_id)), ('irono_service', '=', True), ('kg_partner_id', '!=', False)])
+            for rec in product_ids:
+                values.append({'name': rec.name, 'services_id': rec.id, 'vendor': rec.kg_partner_id.id})
+            values = self.get_list_with_image(values, 'product.product', 'image_1920')
+            return valid_response({'result': values}, message='Category Wise Product Fetched Successfully !',
+                                  is_http=False)
+        except:
+            return valid_response({'result': False}, message='Category Wise Product Fetching Failed !',
+                                  is_http=False)
+
     @http.route('/customer/submit/global/search', methods=["POST"], type="json", auth="none", csrf=False)
     def customer_submit_global_search(self, **post):
         data = json.loads(request.httprequest.data)
@@ -212,7 +230,8 @@ class IronoCustomer(http.Controller):
                 ['|', '|', ('name', 'ilike', str(search)), ('phone', 'ilike', str(search)),
                  ('bussiness_name', 'ilike', str(search)), ('kg_partner_type', '=', 'vendor')])
             product_ids = request.env['product.product'].sudo().search(
-                ['|', ('name', 'ilike', str(search)), ('default_code', 'ilike', str(search)), ('irono_service', '=', True)])
+                ['|', ('name', 'ilike', str(search)), ('default_code', 'ilike', str(search)),
+                 ('irono_service', '=', True)])
             for rec in partner_ids:
                 values.append({'name': rec.name, 'id': rec.id})
             for rec in product_ids:
