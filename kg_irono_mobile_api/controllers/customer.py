@@ -221,7 +221,6 @@ class IronoCustomer(http.Controller):
             return valid_response({'result': False}, message='Customer Feedback Submitting Failed !',
                                   is_http=False)
 
-
     '''  Functions  '''
 
     def clean_mail_body(self, data):
@@ -243,7 +242,8 @@ class IronoCustomer(http.Controller):
                     [('kg_partner_type', '=', 'vendor')], ['name', 'id'])
                 services_providered = self.get_list_with_image(services_providered, 'res.partner', 'image_1920')
                 banners = self.get_list_with_image(banners, 'irono.banner', 'background_image')
-                service_category = request.env['product.category'].sudo().search_read([], ['name', 'id'])
+                service_category = request.env['product.category'].sudo().search_read([('irono_service', '=', True)],
+                                                                                      ['name', 'id'])
                 service_category = self.get_list_with_image(service_category, 'product.category', 'image_1920')
                 values['service_providers'] = services_providered
                 values['service_categories'] = service_category

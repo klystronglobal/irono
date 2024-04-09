@@ -120,7 +120,7 @@ class IronoVendor(http.Controller):
     @http.route('/vendor/get/service/category', methods=["POST"], type="json", auth="none", csrf=False)
     def vendor_get_service_category(self, **post):
         category_id = request.env['product.category'].sudo().search_read(
-            [], ['name', 'id'])
+            [('irono_service', '=', True)], ['name', 'id'])
         if category_id:
             category_id = self.get_list_with_image(category_id, 'product.category', 'image_1920')
             return valid_response({'result': category_id}, message='Service Category Fetched Successfully !',

@@ -12,3 +12,4 @@ class ProductCategoryInherit(models.Model):
     _inherit = "product.category"
 
     image_1920 = fields.Image('Image')
+    irono_service = fields.Boolean('Publish In App', default=False)
