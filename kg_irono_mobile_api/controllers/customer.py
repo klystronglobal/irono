@@ -138,6 +138,7 @@ class IronoCustomer(http.Controller):
         order_ids = request.env['sale.order'].sudo().search_read(
             [('state', '=', 'draft'), ('irono_service', '=', True), ('partner_id', '=', customer_id)],
             ['id', 'name', 'kg_vendor_id', 'amount_total'])
+        order_ids = self.image_for_orders(order_ids)
         return valid_response({'result': order_ids}, message='Pending Orders !',
                               is_http=False)
 
@@ -149,6 +150,7 @@ class IronoCustomer(http.Controller):
             [('state', '=', 'sale'), ('invoice_status', '!=', 'invoiced'), ('irono_service', '=', True),
              ('partner_id', '=', customer_id)],
             ['id', 'name', 'kg_vendor_id', 'amount_total', 'vendor_otp'])
+        order_ids = self.image_for_orders(order_ids)
         return valid_response({'result': order_ids}, message='Accepted Orders !',
                               is_http=False)
 
@@ -160,6 +162,7 @@ class IronoCustomer(http.Controller):
             [('state', '=', 'sale'), ('invoice_status', '=', 'invoiced'), ('irono_service', '=', True),
              ('partner_id', '=', customer_id)],
             ['id', 'name', 'kg_vendor_id', 'amount_total'])
+        order_ids = self.image_for_orders(order_ids)
         return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
 
@@ -171,6 +174,7 @@ class IronoCustomer(http.Controller):
             partner = request.env['res.partner'].sudo().browse(int(user))
         if partner:
             values = {'name': partner.name, 'email': partner.email, 'phone': partner.phone}
+            values['image'] = self.get_image_url('res.partner', partner.id, 'image_1920')
             return valid_response(values, message='Vendor Profile Details Fetched Successfully !', is_http=False)
         return valid_response({'result': False}, message='Vendor Profile Details Fetching Failed !', is_http=False)
 
@@ -270,6 +274,11 @@ class IronoCustomer(http.Controller):
         for rec in data:
             rec['body'] = BeautifulSoup(rec['body'], "lxml").text
         return data
+
+    def image_for_orders(self, values):
+        for rec in values:
+            rec['image'] = self.get_image_url('res.partner', rec.get('kg_vendor_id')[0], 'image_1920')
+        return values
 
     def remove_duplicates(self, data):
         seen_ids = set()

@@ -193,6 +193,7 @@ class IronoVendor(http.Controller):
             [('state', '=', 'draft'), ('irono_service', '=', True), ('kg_vendor_id', '=', user)],
             ['id', 'name', 'partner_id', 'order_line', 'amount_total'])
         order_ids = self.get_list_with_orderlines(order_ids)
+        order_ids = self.image_for_orders(order_ids,user)
         return valid_response({'result': order_ids}, message='Pending Orders !',
                               is_http=False)
 
@@ -205,6 +206,7 @@ class IronoVendor(http.Controller):
              ('kg_vendor_id', '=', user)],
             ['id', 'name', 'partner_id', 'order_line', 'amount_total'])
         order_ids = self.get_list_with_orderlines(order_ids)
+        order_ids = self.image_for_orders(order_ids,user)
         return valid_response({'result': order_ids}, message='Accepted Orders !',
                               is_http=False)
 
@@ -217,6 +219,7 @@ class IronoVendor(http.Controller):
              ('kg_vendor_id', '=', user)],
             ['id', 'name', 'partner_id', 'order_line', 'amount_total'])
         order_ids = self.get_list_with_orderlines(order_ids)
+        order_ids = self.image_for_orders(order_ids,user)
         return valid_response({'result': order_ids}, message='Completed Orders !',
                               is_http=False)
 
@@ -228,6 +231,7 @@ class IronoVendor(http.Controller):
         order_ids = request.env['sale.order'].sudo().search_read(
             [('id', '=', int(order_id))], ['id', 'name', 'partner_id', 'order_line', 'amount_total'])
         order_ids = self.get_list_with_orderlines(order_ids)
+        order_ids = self.image_for_orders(order_ids,user)
         return valid_response({'result': order_ids}, message='Order Details !',
                               is_http=False)
 
@@ -314,6 +318,7 @@ class IronoVendor(http.Controller):
             values = {'name': partner.name, 'email': partner.email, 'phone': partner.phone,
                       'bussiness_name': partner.bussiness_name, 'bussiness_phone': partner.bussiness_phone,
                       'bussiness_email': partner.bussiness_email, 'about': partner.description}
+            values['image'] = self.get_image_url('res.partner', partner.id, 'image_1920')
             return valid_response(values, message='Vendor Profile Details Fetched Successfully !', is_http=False)
         return valid_response({'result': False}, message='Vendor Profile Details Fetching Failed !', is_http=False)
 
@@ -409,6 +414,11 @@ class IronoVendor(http.Controller):
                                   is_http=False)
 
     ''' Functions '''
+
+    def image_for_orders(self, values,user):
+        for rec in values:
+            rec['image'] = self.get_image_url('res.partner', user, 'image_1920')
+        return values
 
     def clean_mail_body(self, data):
         for rec in data:
