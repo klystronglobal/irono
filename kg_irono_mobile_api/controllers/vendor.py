@@ -347,25 +347,46 @@ class IronoVendor(http.Controller):
         return valid_response({'result': privacy_and_policy}, message='Privacy and Policy Fetched Successfully !',
                               is_http=False)
 
-    @http.route('/get/contact/us', methods=["POST"], type="json", auth="none", csrf=False)
-    def get_contact_us(self, **post):
+    # @http.route('/get/contact/us', methods=["POST"], type="json", auth="none", csrf=False)
+    # def get_contact_us(self, **post):
+    #     data = json.loads(request.httprequest.data)
+    #     user = data.get('user', False)
+    #     company = request.env['res.company'].sudo().search([], limit=1)
+    #     name = company.name
+    #     phone = company.phone
+    #     street = company.street
+    #     street2 = company.street2
+    #     city = company.city
+    #     zip = company.zip
+    #     email = company.zip
+    #     website = company.website
+    #     state = company.state_id.name if company.state_id else ''
+    #     country = company.country_id.name if company.country_id else ''
+    #     values = {'name': name, 'phone': phone, 'street': street, 'street2': street2, 'city': city, 'zip': zip,
+    #               'email': email, 'website':website,'state':state,'country':country}
+    #     return valid_response({'result': values}, message='Company Details Fetched Successfully !',
+    #                           is_http=False)
+
+    @http.route('/submit/contact/us', methods=["POST"], type="json", auth="none", csrf=False)
+    def submit_contact_us(self, **post):
         data = json.loads(request.httprequest.data)
         user = data.get('user', False)
-        company = request.env['res.company'].sudo().search([], limit=1)
-        name = company.name
-        phone = company.phone
-        street = company.street
-        street2 = company.street2
-        city = company.city
-        zip = company.zip
-        email = company.zip
-        website = company.website
-        state = company.state_id.name if company.state_id else ''
-        country = company.country_id.name if company.country_id else ''
-        values = {'name': name, 'phone': phone, 'street': street, 'street2': street2, 'city': city, 'zip': zip,
-                  'email': email, 'website':website,'state':state,'country':country}
-        return valid_response({'result': values}, message='Company Details Fetched Successfully !',
-                              is_http=False)
+        name = data.get('subject', False)
+        description = data.get('description', False)
+        priority = data.get('priority', False)
+        try:
+            company = request.env['res.company'].sudo().search([], limit=1)
+            partner = request.env['res.partner'].sudo().browse(int(user))
+            team_id = request.env['helpdesk.ticket.team'].sudo().search([('name', '=', 'Helpdesk')], limit=1)
+            values = {'name': name, 'description': description, 'priority': str(priority), 'company_id': company.id,
+                      'partner_id': partner.id, 'partner_name': partner.name, 'partner_email': partner.email,
+                      'team_id': team_id.id, 'user_id': 2,'channel_id':1}
+            ticket = request.env['helpdesk.ticket'].sudo().with_user(request.env['res.users'].sudo().browse(2)).create(values)
+            return valid_response({'result': True}, message='Ticket Raised Successfully !',
+                                  is_http=False)
+        except:
+            return valid_response({'result': False}, message='Ticketing Failed !',
+                                  is_http=False)
 
     @http.route('/vendor/submit/feedback', methods=["POST"], type="json", auth="none", csrf=False)
     def vendor_submit_feedback(self, **post):

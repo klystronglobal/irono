@@ -9,7 +9,7 @@
     "maintainer": "Aravind",
     "license": "AGPL-3",
     "website": "https://klystronglobal.com",
-    "depends": ['web', 'base', 'product', 'sale'],
+    "depends": ['web', 'base', 'product', 'sale', 'helpdesk_mgmt'],
     "data": [
         'security/ir.model.access.csv',
         'data/banner_sequence.xml',
