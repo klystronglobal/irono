@@ -211,12 +211,18 @@ class IronoCustomer(http.Controller):
         user = data.get('user', False)
         category_id = data.get('category_id', False)
         values = []
+        providers = []
         try:
-            product_ids = request.env['product.product'].sudo().search(
-                [('categ_id', '=', int(category_id)), ('irono_service', '=', True), ('kg_partner_id', '!=', False)])
+            product_ids = request.env['product.product'].sudo().search_read(
+                [('categ_id', '=', int(category_id)), ('irono_service', '=', True), ('kg_partner_id', '!=', False)],['kg_partner_id'])
+            print(product_ids,'product_idsproduct_ids')
             for rec in product_ids:
-                values.append({'name': rec.name, 'services_id': rec.id, 'vendor': rec.kg_partner_id.id})
-            values = self.get_list_with_image(values, 'product.product', 'image_1920')
+                if rec.get('kg_partner_id')[0] not in providers:
+                    providers.append(rec.get('kg_partner_id')[0])
+            service_providers = request.env['res.partner'].sudo().browse(providers)
+            for rec in service_providers:
+                values.append({'id':rec.id,'name':rec.name})
+            values = self.get_list_with_image(values, 'res.partner', 'image_1920')
             return valid_response({'result': values}, message='Category Wise Product Fetched Successfully !',
                                   is_http=False)
         except:
